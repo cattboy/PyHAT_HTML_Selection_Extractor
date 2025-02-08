@@ -48,20 +48,59 @@
         </div>
     </div>
 
-    <!-- Save Button -->
-    <div class="mt-4">
+    <!-- Save Button and Radio Toggles -->
+    <div class="mt-4 flex items-center gap-8">
         <button
             onclick="saveSelectedElement()"
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
         >
             Save Selected Element
         </button>
+
+        <!-- Radio Toggles -->
+        <div class="flex gap-4">
+            <label class="inline-flex items-center">
+                <input type="radio" name="elementType" value="price-element" class="form-radio text-indigo-600" checked>
+                <span class="ml-2 text-white">price-element</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="radio" name="elementType" value="download-element" class="form-radio text-indigo-600">
+                <span class="ml-2 text-white">download-element</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="radio" name="elementType" value="upload-element" class="form-radio text-indigo-600">
+                <span class="ml-2 text-white">upload-element</span>
+            </label>
+            <label class="inline-flex items-center">
+
+                <input type="radio" name="elementType" value="details-element" class="form-radio text-indigo-600">
+                <span class="ml-2 text-white">details-element</span>
+            </label>
+        </div>
     </div>
 </div>
 
 <script>
 let selectedElementData = null;
 let originalUrl = '';
+let currentRadioIndex = 0;
+const radioValues = ['price-element', 'download-element', 'upload-element', 'details-element'];
+
+function selectNextRadio() {
+    currentRadioIndex = (currentRadioIndex + 1) % radioValues.length;
+    const radios = document.getElementsByName('elementType');
+    radios[currentRadioIndex].checked = true;
+}
+
+function getSelectedRadioValue() {
+    const radios = document.getElementsByName('elementType');
+    for (const radio of radios) {
+        if (radio.checked) {
+            return radio.value;
+        }
+    }
+    return null;
+}
 
 function openSelectionWindow() {
     let url = document.getElementById('urlInput').value;
@@ -120,6 +159,16 @@ function saveSelectedElement() {
         alert('Please select an element first');
         return;
     }
+
+    // Get the currently selected radio value
+    const elementType = getSelectedRadioValue();
+    if (!elementType) {
+        alert('Please select an element type');
+        return;
+    }
+
+    // Add the element type to the data
+    selectedElementData.elementType = elementType;
     
     fetch('/save', {
         method: 'POST',
@@ -131,6 +180,7 @@ function saveSelectedElement() {
     .then(data => {
         if (data.status === 'success') {
             console.log('Element saved successfully!');
+            selectNextRadio(); // Select next radio after successful save
         } else {
             alert('Error saving element: ' + data.message);
         }

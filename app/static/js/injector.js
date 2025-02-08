@@ -3,7 +3,7 @@ function generateXPath(element) {
     if (!element) return '';
     
     const idx = (sib, name) => sib 
-        ? idx(sib.previousElementSibling, name||sib.localName) + (sib.localName == name)
+        ? idx(sib.previousElementSibling, name || sib.localName) + (sib.localName == name)
         : 1;
     const segs = elm => !elm || elm.nodeType !== 1 
         ? ['']
@@ -20,17 +20,19 @@ document.addEventListener('click', function(e) {
     
     const element = e.target;
     
-    // Create element data object
+    // Create element data object with reordered properties
     const selectedData = {
+        url: window.originalUrl,
+        // Use parent's getSelectedRadioValue if available, otherwise default to 'price-element'
+        elementType: (window.opener && typeof window.opener.getSelectedRadioValue === 'function' ? window.opener.getSelectedRadioValue() : 'price-element'),
+        xpath: generateXPath(element),
         tag: element.tagName.toLowerCase(),
         content: element.innerText.trim().slice(0, 200),
-        html: element.outerHTML,
-        xpath: generateXPath(element),
         classes: Array.from(element.classList),
-        attributes: Object.assign({}, ...Array.from(element.attributes).map(attr => ({[attr.name]: attr.value}))),
+        attributes: Object.assign({}, ...Array.from(element.attributes).map(attr => ({ [attr.name]: attr.value }))),
         parent_tag: element.parentElement ? element.parentElement.tagName.toLowerCase() : null,
         child_tags: Array.from(element.children).map(child => child.tagName.toLowerCase()),
-        url: window.originalUrl
+        html: element.outerHTML
     };
     
     // Send data back to parent window
