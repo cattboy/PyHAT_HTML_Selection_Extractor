@@ -61,6 +61,7 @@
 
 <script>
 let selectedElementData = null;
+let originalUrl = '';
 
 function openSelectionWindow() {
     let url = document.getElementById('urlInput').value;
@@ -73,12 +74,11 @@ function openSelectionWindow() {
         url = 'https://' + url;
     }
     
-    // Save URL to data.json
- 
+    originalUrl = url;
     
     // Use our proxy endpoint
     let proxyUrl = `/proxy?url=${encodeURIComponent(url)}`;
-    let newWin = window.open(proxyUrl, '_blank');
+    let newWin = window.open(proxyUrl, '_blank', 'originalUrl=' + encodeURIComponent(url));
     
     if(!newWin) {
         alert('Please allow pop-ups for this website');
@@ -89,6 +89,7 @@ function openSelectionWindow() {
 window.addEventListener('message', function(event) {
     if (event.data && event.data.selectedElement) {
         selectedElementData = event.data.selectedElement;
+        selectedElementData.url = originalUrl;
         
         // Display the received element data
         const outputDiv = document.getElementById('output');

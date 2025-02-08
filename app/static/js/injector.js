@@ -30,7 +30,7 @@ document.addEventListener('click', function(e) {
         attributes: Object.assign({}, ...Array.from(element.attributes).map(attr => ({[attr.name]: attr.value}))),
         parent_tag: element.parentElement ? element.parentElement.tagName.toLowerCase() : null,
         child_tags: Array.from(element.children).map(child => child.tagName.toLowerCase()),
-        url: window.location.href
+        url: window.originalUrl
     };
     
     // Send data back to parent window

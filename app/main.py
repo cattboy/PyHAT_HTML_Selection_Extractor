@@ -119,6 +119,11 @@ async def proxy(request: Request, url: str):
         # Parse the HTML
         soup = BeautifulSoup(response.text, 'html.parser')
         
+        # Pass the original URL to the script, maybe don't need this
+        url_script = soup.new_tag('script')
+        url_script.string = f'window.originalUrl = "{url}";'
+        soup.head.append(url_script)
+
         # Inject our script
         script_tag = soup.new_tag('script', src='/static/js/injector.js')
         soup.body.append(script_tag)
