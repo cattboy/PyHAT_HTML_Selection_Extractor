@@ -74,22 +74,7 @@ function openSelectionWindow() {
     }
     
     // Save URL to data.json
-    fetch('/save', {
-        method: 'POST',
-        body: new URLSearchParams({
-            'element-data': JSON.stringify({
-                tag: 'url',
-                content: url,
-                html: '',
-                xpath: '',
-                classes: [],
-                attributes: {},
-                parent_tag: null,
-                child_tags: [],
-                url: url
-            })
-        })
-    });
+ 
     
     // Use our proxy endpoint
     let proxyUrl = `/proxy?url=${encodeURIComponent(url)}`;

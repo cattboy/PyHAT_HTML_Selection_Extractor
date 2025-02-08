@@ -57,10 +57,7 @@ async def get_element_detail(request: Request, element_id: int):
         "child_tags": []
     })
     
-    return templates.TemplateResponse(
-        "element_detail.html",
-        {"request": request, "element": element}
-    )
+ 
 
 @app.post("/save", response_class=JSONResponse)
 async def save_data(request: Request):
@@ -75,9 +72,14 @@ async def save_data(request: Request):
             os.makedirs(output_dir)
         file_path = os.path.join(output_dir, "data.json")
 
+        if not os.path.exists(file_path):
+            with open(file_path, "w") as f:
+                json.dump([], f, indent=4)
+
         # Load existing data if available
         data_list = []
         if os.path.exists(file_path):
+
             with open(file_path, "r") as f:
                 try:
                     data_list = json.load(f)
