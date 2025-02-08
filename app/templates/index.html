@@ -16,16 +16,14 @@
     </div>
 
     <!-- URL Input Form -->
-    <form class="mb-8" method="get">
+    <div class="mb-8">
         <div class="flex gap-4">
             <div class="flex-1">
-                <label for="url" class="block text-sm font-medium text-gray-700">Website URL</label>
+                <label for="urlInput" class="block text-sm font-medium text-gray-700">Website URL</label>
                 <div class="mt-1">
                     <input
                         type="url"
-                        name="url"
-                        id="url"
-                        value="{{ url or '' }}"
+                        id="urlInput"
                         placeholder="https://example.com"
                         class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"
                     >
@@ -33,14 +31,32 @@
             </div>
             <div class="flex items-end">
                 <button
-                    type="submit"
+                    onclick="openSelectionWindow()"
                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                    Load Website
+                    Open Website
                 </button>
             </div>
         </div>
-    </form>
+    </div>
+
+    <!-- Selected Element Display -->
+    <div id="selected-element" class="mt-8">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Selected Element</h3>
+        <div id="output" class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-gray-500 text-sm">No element selected yet. Click on an element in the opened website to select it.</p>
+        </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="mt-4">
+        <button
+            onclick="saveSelectedElement()"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+            Save Selected Element
+        </button>
+    </div>
 
     {% if error %}
     <div class="rounded-md bg-red-50 p-4 mb-8">
@@ -91,13 +107,80 @@
 </div>
 
 <script>
-document.addEventListener('alpine:init', () => {
-    Alpine.data('elementSelector', () => ({
-        selectedElement: null,
+let selectedElementData = null;
 
-        selectElement(element) {
-            this.selectedElement = element;
+function openSelectionWindow() {
+    let url = document.getElementById('urlInput').value;
+    if (!url) {
+        alert('Please enter a URL');
+        return;
+    }
+    
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+    }
+    
+    // Use our proxy endpoint
+    let proxyUrl = `/proxy?url=${encodeURIComponent(url)}`;
+    let newWin = window.open(proxyUrl, '_blank');
+    
+    if(!newWin) {
+        alert('Please allow pop-ups for this website');
+    }
+}
+
+// Listen for messages from the secondary window
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.selectedElement) {
+        selectedElementData = event.data.selectedElement;
+        
+        // Display the received element data
+        const outputDiv = document.getElementById('output');
+        outputDiv.innerHTML = `
+            <div class="space-y-4">
+                <div>
+                    <span class="font-medium">Tag:</span> ${selectedElementData.tag}
+                </div>
+                <div>
+                    <span class="font-medium">Content:</span> 
+                    <div class="mt-1 text-sm">${selectedElementData.content}</div>
+                </div>
+                <div>
+                    <span class="font-medium">XPath:</span> 
+                    <div class="mt-1 text-sm">${selectedElementData.xpath}</div>
+                </div>
+                <div>
+                    <span class="font-medium">Classes:</span> 
+                    <div class="mt-1 text-sm">${selectedElementData.classes.join(' ')}</div>
+                </div>
+            </div>
+        `;
+    }
+});
+
+function saveSelectedElement() {
+    if (!selectedElementData) {
+        alert('Please select an element first');
+        return;
+    }
+    
+    fetch('/save', {
+        method: 'POST',
+        body: new URLSearchParams({
+            'element-data': JSON.stringify(selectedElementData)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('Element saved successfully!');
+        } else {
+            alert('Error saving element: ' + data.message);
         }
-    }));
-});</script>
+    })
+    .catch(error => {
+        alert('Error saving element: ' + error);
+    });
+}
+</script>
 {% endblock %} 
