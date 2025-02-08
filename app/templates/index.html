@@ -4,7 +4,7 @@
 
 {% block content %}
 <div x-data="elementSelector" class="pl-96">
-    <div class="md:flex md:items-center md:justify-between mb-8">
+    <div class="md:flex md:items-left md:justify-between mb-8">
         <div class="flex-1 min-w-0">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
                 HTML Element Selector
@@ -57,53 +57,6 @@
             Save Selected Element
         </button>
     </div>
-
-    {% if error %}
-    <div class="rounded-md bg-red-50 p-4 mb-8">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                </svg>
-            </div>
-            <div class="ml-3">
-                <h3 class="text-sm font-medium text-red-800">Error loading website</h3>
-                <p class="mt-2 text-sm text-red-700">{{ error }}</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    {% if elements %}
-    <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-        {% for element in elements %}
-        <div
-            class="element-card bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200 cursor-pointer hover:shadow-md"
-            hx-get="/element/{{ element.id }}"
-            hx-target="#element-detail"
-            hx-swap="innerHTML"
-            @click="selectElement({{ element|tojson }})"
-        >
-            <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg font-medium text-gray-900">{{ element.name }}</h3>
-                <p class="mt-1 text-sm text-gray-500">{{ element.content }}</p>
-                <p class="mt-2 text-xs text-gray-400">XPath: {{ element.xpath }}</p>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% elif not error %}
-    <div class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No website loaded</h3>
-        <p class="mt-1 text-sm text-gray-500">Enter a URL above to start extracting elements.</p>
-    </div>
-    {% endif %}
-
-    <!-- Element Detail Section -->
-    <div id="element-detail"></div>
 </div>
 
 <script>
