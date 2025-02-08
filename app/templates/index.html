@@ -3,7 +3,7 @@
 {% block title %}Select HTML Elements - PyHAT HTML Selection Extractor{% endblock %}
 
 {% block content %}
-<div x-data="elementSelector" class="pl-96">
+<div x-data="elementSelector" class="container mx-auto px-4 max-w-4xl">
     <div class="md:flex md:items-left md:justify-between mb-8">
         <div class="flex-1 min-w-0">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
@@ -72,6 +72,24 @@ function openSelectionWindow() {
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'https://' + url;
     }
+    
+    // Save URL to data.json
+    fetch('/save', {
+        method: 'POST',
+        body: new URLSearchParams({
+            'element-data': JSON.stringify({
+                tag: 'url',
+                content: url,
+                html: '',
+                xpath: '',
+                classes: [],
+                attributes: {},
+                parent_tag: null,
+                child_tags: [],
+                url: url
+            })
+        })
+    });
     
     // Use our proxy endpoint
     let proxyUrl = `/proxy?url=${encodeURIComponent(url)}`;
