@@ -72,28 +72,34 @@ async def save_data(request: Request):
             os.makedirs(output_dir)
         file_path = os.path.join(output_dir, "data.json")
 
-        if not os.path.exists(file_path):
-            with open(file_path, "w") as f:
-                json.dump([], f, indent=4)
-
-        # Load existing data if available
-        data_list = []
+        # Initialize or load existing data
+        plans_data = {}
         if os.path.exists(file_path):
-
             with open(file_path, "r") as f:
                 try:
-                    data_list = json.load(f)
+                    plans_data = json.load(f)
                 except json.JSONDecodeError:
-                    data_list = []
-        
-        # Append new data and write back to file
-        data_list.append(element_data)
+                    plans_data = {}
+
+        # Find the current plan array to add to
+        total_elements = sum(len(plans_data.get(key, [])) for key in plans_data.keys())
+        current_plan_number = (total_elements // 4) + 1
+        current_plan_key = f"plans{current_plan_number}"
+
+        # Create new plan array if needed
+        if current_plan_key not in plans_data:
+            plans_data[current_plan_key] = []
+
+        # Add element to current plan
+        plans_data[current_plan_key].append(element_data)
+
+        # Write updated data back to file
         with open(file_path, "w") as f:
-            json.dump(data_list, f, indent=4)
+            json.dump(plans_data, f, indent=4)
         
         return JSONResponse(
             content={
-                "message": f"Element saved successfully!",
+                "message": f"Element saved successfully to {current_plan_key}!",
                 "status": "success"
             }
         )
