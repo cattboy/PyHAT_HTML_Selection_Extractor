@@ -1,7 +1,7 @@
 import json
 import os
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 import datetime
@@ -21,72 +21,9 @@ templates = Jinja2Templates(directory="app/templates")
 elements_store = {}
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request, url: str = None):
-    """Render the main page with URL input or website content."""
-    if not url:
-        return templates.TemplateResponse(
-            "index.html",
-            {"request": request, "url": None, "content": None}
-        )
-    
-    try:
-        # Validate URL
-        parsed_url = urlparse(url)
-        if not parsed_url.scheme:
-            url = f"https://{url}"
-        
-        # Fetch website content
-        async with httpx.AsyncClient(follow_redirects=True) as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            
-        # Parse HTML and extract elements
-        soup = BeautifulSoup(response.text, 'html.parser')
-        elements = []
-        
-        # Extract common elements
-        for i, elem in enumerate(soup.find_all(['div', 'section', 'article', 'header', 'footer', 'nav', 'main', 'aside']), 1):
-            # Get element text content
-            content = elem.get_text(strip=True)[:200] + "..." if len(elem.get_text(strip=True)) > 200 else elem.get_text(strip=True)
-            
-            # Get element attributes
-            attributes = {k: v for k, v in elem.attrs.items() if k != 'class'}
-            
-            # Create element data
-            element_data = {
-                "id": i,
-                "name": elem.name.title(),
-                "content": content,
-                "html": str(elem),
-                "xpath": generate_xpath(elem),
-                "classes": elem.get("class", []),
-                "attributes": attributes,
-                "tag": elem.name,
-                "parent_tag": elem.parent.name if elem.parent else None,
-                "child_tags": [child.name for child in elem.find_all(recursive=False)],
-                "url": url
-            }
-            
-            elements.append(element_data)
-            elements_store[i] = element_data
-        
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "url": url,
-                "elements": elements
-            }
-        )
-    except Exception as e:
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "url": url,
-                "error": str(e)
-            }
-        )
+async def index(request: Request):
+    """Render the main page for HTML selection extraction from a secondary browser window."""
+    return templates.TemplateResponse("index.html", {"request": request})
 
 def generate_xpath(element):
     """Generate XPath for a BeautifulSoup element."""
@@ -161,5 +98,34 @@ async def save_data(request: Request):
     except Exception as e:
         return JSONResponse(
             content={"message": f"Error saving data: {str(e)}", "status": "error"},
+            status_code=500
+        )
+
+@app.get("/proxy")
+async def proxy(request: Request, url: str):
+    """Proxy the target URL and inject our element selector script."""
+    try:
+        # Validate and normalize URL
+        if not url.startswith(('http://', 'https://')):
+            url = f'https://{url}'
+            
+        # Fetch the target website
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            
+        # Parse the HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Inject our script
+        script_tag = soup.new_tag('script', src='/static/js/injector.js')
+        soup.body.append(script_tag)
+        
+        # Return the modified HTML
+        return HTMLResponse(content=str(soup), status_code=200)
+        
+    except Exception as e:
+        return JSONResponse(
+            content={"error": f"Failed to proxy URL: {str(e)}"},
             status_code=500
         ) 
