@@ -17,6 +17,9 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Initialize Jinja2 templates
 templates = Jinja2Templates(directory="app/templates")
 
+# Store scraped elements in memory
+elements_store = {}
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request, url: str = None):
     """Render the main page with URL input or website content."""
@@ -46,18 +49,26 @@ async def index(request: Request, url: str = None):
             # Get element text content
             content = elem.get_text(strip=True)[:200] + "..." if len(elem.get_text(strip=True)) > 200 else elem.get_text(strip=True)
             
-            # Get element type and any identifying classes
-            elem_type = elem.name
-            elem_class = " ".join(elem.get("class", []))
-            elem_id = elem.get("id", "")
+            # Get element attributes
+            attributes = {k: v for k, v in elem.attrs.items() if k != 'class'}
             
-            elements.append({
+            # Create element data
+            element_data = {
                 "id": i,
-                "name": f"{elem_type.title()}{f' - {elem_id}' if elem_id else ''}{f' ({elem_class})' if elem_class else ''}",
+                "name": elem.name.title(),
                 "content": content,
                 "html": str(elem),
-                "xpath": generate_xpath(elem)
-            })
+                "xpath": generate_xpath(elem),
+                "classes": elem.get("class", []),
+                "attributes": attributes,
+                "tag": elem.name,
+                "parent_tag": elem.parent.name if elem.parent else None,
+                "child_tags": [child.name for child in elem.find_all(recursive=False)],
+                "url": url
+            }
+            
+            elements.append(element_data)
+            elements_store[i] = element_data
         
         return templates.TemplateResponse(
             "index.html",
@@ -97,9 +108,21 @@ def generate_xpath(element):
 @app.get("/element/{element_id}", response_class=HTMLResponse)
 async def get_element_detail(request: Request, element_id: int):
     """Return HTML snippet with element details."""
+    element = elements_store.get(element_id, {
+        "id": element_id,
+        "name": "Unknown Element",
+        "content": "Element not found",
+        "xpath": "",
+        "classes": [],
+        "attributes": {},
+        "tag": "",
+        "parent_tag": "",
+        "child_tags": []
+    })
+    
     return templates.TemplateResponse(
         "element_detail.html",
-        {"request": request, "element": {"id": element_id}}
+        {"request": request, "element": element}
     )
 
 @app.post("/save", response_class=JSONResponse)

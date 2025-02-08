@@ -3,7 +3,7 @@
 {% block title %}Select HTML Elements - PyHAT HTML Selection Extractor{% endblock %}
 
 {% block content %}
-<div x-data="elementSelector">
+<div x-data="elementSelector" class="pl-96">
     <div class="md:flex md:items-center md:justify-between mb-8">
         <div class="flex-1 min-w-0">
             <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
@@ -59,7 +59,7 @@
     {% endif %}
 
     {% if elements %}
-    <div class="mt-8 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {% for element in elements %}
         <div
             class="element-card bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200 cursor-pointer hover:shadow-md"
@@ -87,82 +87,16 @@
     {% endif %}
 
     <!-- Element Detail Section -->
-    <div class="mt-8">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Element Details</h3>
-        <div id="element-detail" class="bg-white shadow rounded-lg p-6">
-            <p class="text-gray-500 text-sm">Select an element to view its details</p>
-        </div>
-    </div>
-
-    <!-- Save Button Section -->
-    <div class="mt-8" x-cloak x-show="selectedElement">
-        <button
-            @click="saveElement"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            :disabled="saving"
-        >
-            <span x-show="!saving">Save Element</span>
-            <span x-show="saving">Saving...</span>
-        </button>
-        
-        <!-- Success/Error Message -->
-        <div
-            x-show="message"
-            :class="{'bg-green-50 text-green-800': status === 'success', 'bg-red-50 text-red-800': status === 'error'}"
-            class="mt-4 rounded-md p-4"
-        >
-            <p x-text="message"></p>
-        </div>
-    </div>
+    <div id="element-detail"></div>
 </div>
 
 <script>
 document.addEventListener('alpine:init', () => {
     Alpine.data('elementSelector', () => ({
         selectedElement: null,
-        saving: false,
-        message: '',
-        status: '',
 
         selectElement(element) {
             this.selectedElement = element;
-            this.message = '';
-        },
-
-        async saveElement() {
-            if (!this.selectedElement) return;
-
-            this.saving = true;
-            this.message = '';
-            
-            try {
-                const formData = new FormData();
-                formData.append('id', this.selectedElement.id);
-                formData.append('name', this.selectedElement.name);
-                formData.append('content', this.selectedElement.content);
-
-                const response = await fetch('/save', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                this.message = result.message;
-                this.status = result.status;
-
-                if (result.status === 'success') {
-                    // Clear selection after successful save
-                    setTimeout(() => {
-                        this.selectedElement = null;
-                        this.message = '';
-                    }, 3000);
-                }
-            } catch (error) {
-                this.message = 'Error saving element. Please try again.';
-                this.status = 'error';
-            } finally {
-                this.saving = false;
-            }
         }
     }));
 });</script>
